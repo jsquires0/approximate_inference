@@ -1,5 +1,5 @@
 # Approximate vs. Exact Inference in Bayesian Networks
-This project leverages the Bayes Net python library  `https://github.com/MaxHalford/sorobn` (skeptical of the likelihood weighting implementaation)
+This project leverages the Bayes Net python library  `https://github.com/MaxHalford/sorobn`
 ## Setup
 ```
 conda env create -f environment.yml

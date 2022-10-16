@@ -45,7 +45,7 @@ class Driver:
 		return
 
 	@timeit_wrapper
-	def infer(self, alg, q, E, N=10000):
+	def infer(self, alg, q, E, N=500):
 		"""
 		Makes an inference
 		Args:
@@ -69,27 +69,29 @@ if __name__ == '__main__':
 	driver = Driver(Alarm_Network)
 
 	# compute P(q|E) with exact (variable elimination) & approx inference algs
+	query = 'Burglary'
+	evidence = {'MaryCalls':True, 'JohnCalls': True}
+
 	result = driver.infer(alg='exact',
-				 q='Burglary',
-				 E={'MaryCalls':True, 'JohnCalls': True}
+				 q=query,
+				 E=evidence,
 				 )
 	pprint.pprint(f'Exact Inference {result}'); print('\n')
 
 	result = driver.infer(alg='rejection',
-				q='Burglary',
-				E={'MaryCalls':True, 'JohnCalls': True}
-				)
+				 q=query,
+				 E=evidence,
+				 )
 	pprint.pprint(f'Approx Inference (rejection): {result}'); print('\n')
 
 	result = driver.infer(alg='gibbs',
-			q='Burglary',
-			E={'MaryCalls':True, 'JohnCalls': True}
-			)
+				 q=query,
+				 E=evidence,
+				 )
 	pprint.pprint(f'Approx Inference (gibbs): {result}'); print('\n')
 
 	result = driver.infer(alg='likelihood',
-		q='Burglary',
-		E={'MaryCalls':True, 'JohnCalls': True},
-		N = 100000,
-		)
+				 q=query,
+				 E=evidence,
+				 )
 	pprint.pprint(f'Approx Inference (likelihood): {result}'); print('\n')
