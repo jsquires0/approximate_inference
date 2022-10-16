@@ -45,7 +45,7 @@ class Driver:
 		return
 
 	@timeit_wrapper
-	def infer(self, alg, q, E, N=500):
+	def infer(self, alg, q, E, N=1000):
 		"""
 		Makes an inference
 		Args:

@@ -3,6 +3,8 @@ This project leverages the Bayes Net python library  `https://github.com/MaxHalf
 ## Setup
 ```
 conda env create -f environment.yml
+conda activate BayesN
+make install
 ```
 
 ## Run
