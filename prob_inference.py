@@ -13,7 +13,7 @@ import pprint
 import time
 
 from alarm_net import Alarm_Network
-
+from asia_net import Asia_Network
 
 def timeit_wrapper(func):
 	# computes average CPU execution time over N iterations
@@ -66,11 +66,41 @@ if __name__ == '__main__':
 
 	# Testing algorithms on Pearl's Alarm network, found in:
 	# Artificial Intelligence: A Modern Approach, Russel & Norvig 2021
-	driver = Driver(Alarm_Network)
+	"""driver = Driver(Alarm_Network)
 
 	# compute P(q|E) with exact (variable elimination) & approx inference algs
 	query = 'Burglary'
-	evidence = {'MaryCalls':True, 'JohnCalls': True}
+	evidence = {'Alarm':True}# 'JohnCalls': True}
+
+	result = driver.infer(alg='exact',
+				 q=query,
+				 E=evidence,
+				 )
+	pprint.pprint(f'Exact Inference {result}'); print('\n')
+
+	result = driver.infer(alg='rejection',
+				 q=query,
+				 E=evidence,
+				 )
+	pprint.pprint(f'Approx Inference (rejection): {result}'); print('\n')
+
+	result = driver.infer(alg='gibbs',
+				 q=query,
+				 E=evidence,
+				 )
+	pprint.pprint(f'Approx Inference (gibbs): {result}'); print('\n')
+
+	result = driver.infer(alg='likelihood',
+				 q=query,
+				 E=evidence,
+				 )
+	pprint.pprint(f'Approx Inference (likelihood): {result}'); print('\n')"""
+
+	driver = Driver(Asia_Network)
+
+	# compute P(q|E) with exact (variable elimination) & approx inference algs
+	query = 'Lung'
+	evidence = {'Asia': True, 'Smoke': False}
 
 	result = driver.infer(alg='exact',
 				 q=query,
