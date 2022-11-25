@@ -23,7 +23,7 @@ def timeit_wrapper(func):
 		start = time.process_time()
 		for i in range(niter):
 			try:
-				results[i] = func(*args, **kwargs)[True]
+				results[i] = func(*args, **kwargs)[0]
 			except: # p_false = 1.0
 				results[i] = 0.0
 		end = time.process_time()
@@ -100,7 +100,7 @@ if __name__ == '__main__':
 
 	# compute P(q|E) with exact (variable elimination) & approx inference algs
 	query = 'Lung'
-	evidence = {'Asia': True, 'Smoke': False}
+	evidence = {'Asia': 'yes', 'Smoke': 'no'}
 
 	result = driver.infer(alg='exact',
 				 q=query,
