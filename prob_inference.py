@@ -11,27 +11,38 @@ import numpy as np
 import pandas as pd 
 import pprint
 import time
+from collections import defaultdict
+from scipy.special import rel_entr as KLDiv
 
 from alarm_net import Alarm_Network
 from asia_net import Asia_Network
+from insurance_net import Insurance_Network
+
+def aggregate(dict_list):
+	# average results
+	results = defaultdict(list)
+
+	for d in dict_list:
+		for k,v in d.items():
+			results[k].append(v)
+
+	for k,v in results.items():
+		results[k] = np.mean(v)
+	return results
 
 def timeit_wrapper(func):
 	# computes average CPU execution time over N iterations
 	def wrapper(*args, **kwargs):
-		niter = 10
-		results = np.zeros(niter)
+		niter = 1
+		results = []
 		start = time.process_time()
-		for i in range(niter):
-			try:
-				results[i] = func(*args, **kwargs)[0]
-			except: # p_false = 1.0
-				results[i] = 0.0
+		for _ in range(niter):
+			results.append(func(*args, **kwargs))
 		end = time.process_time()
 		print(f'Avg CPU time: {(end-start)/niter}')
 
 		# aggregate probabilities
-		p_true = np.mean(results)
-		return {True: p_true, False: 1-p_true}
+		return aggregate(results)
 	return wrapper 
 
 
@@ -45,7 +56,7 @@ class Driver:
 		return
 
 	@timeit_wrapper
-	def infer(self, alg, q, E, N=1000):
+	def infer(self, alg, q, E, N=100):
 		"""
 		Makes an inference
 		Args:
@@ -60,68 +71,57 @@ class Driver:
 
 		out = self.network.query(q, event=E, algorithm=alg, n_iterations=N)
 		return out
+	
+	def run_all_inference_methods(self, query, evidence, N=100):
+		"""
+		Makes an inference using approximate and exact BN inference algs
+		Args:
+			query: query variable(s)
+			evidence: dictionary containing evidence
+			N: number of iterations for approx inference. Ignored for exact
+		Returns:
+			P(q|E) as estimated/computed with specified algorithm
+		"""
+		exact_dist = self.infer(alg='exact',
+				 q=query,
+				 E=evidence,
+				 )
+
+		pprint.pprint(f'Exact Inference {exact_dist}'); print('\n')
+
+		rej_dist = self.infer(alg='rejection',
+					q=query,
+					E=evidence,
+					N=N)
+		pprint.pprint(f'Approx Inference (rejection): {rej_dist}'); print('\n')
+
+		gibbs_dist = self.infer(alg='gibbs',
+					q=query,
+					E=evidence,
+					N=N)
+		pprint.pprint(f'Approx Inference (gibbs): {gibbs_dist}'); print('\n')
+
+		lw_dist = self.infer(alg='likelihood',
+					q=query,
+					E=evidence,
+					N=N)
+		pprint.pprint(f'Approx Inference (likelihood): {lw_dist}'); print('\n')
+
+
+		return exact_dist, rej_dist, gibbs_dist, lw_dist
 
 
 if __name__ == '__main__':
-
-	# Testing algorithms on Pearl's Alarm network, found in:
-	# Artificial Intelligence: A Modern Approach, Russel & Norvig 2021
-	"""driver = Driver(Alarm_Network)
-
-	# compute P(q|E) with exact (variable elimination) & approx inference algs
-	query = 'Burglary'
-	evidence = {'Alarm':True}# 'JohnCalls': True}
-
-	result = driver.infer(alg='exact',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Exact Inference {result}'); print('\n')
-
-	result = driver.infer(alg='rejection',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Approx Inference (rejection): {result}'); print('\n')
-
-	result = driver.infer(alg='gibbs',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Approx Inference (gibbs): {result}'); print('\n')
-
-	result = driver.infer(alg='likelihood',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Approx Inference (likelihood): {result}'); print('\n')"""
-
+	
 	driver = Driver(Asia_Network)
-
-	# compute P(q|E) with exact (variable elimination) & approx inference algs
+	# # compute P(q|E) with exact (variable elimination) & approx inference algs
 	query = 'Lung'
 	evidence = {'Asia': 'yes', 'Smoke': 'no'}
+	exact, rej, gibbs, lw = driver.run_all_inference_methods(query, evidence)
+	
 
-	result = driver.infer(alg='exact',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Exact Inference {result}'); print('\n')
-
-	result = driver.infer(alg='rejection',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Approx Inference (rejection): {result}'); print('\n')
-
-	result = driver.infer(alg='gibbs',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Approx Inference (gibbs): {result}'); print('\n')
-
-	result = driver.infer(alg='likelihood',
-				 q=query,
-				 E=evidence,
-				 )
-	pprint.pprint(f'Approx Inference (likelihood): {result}'); print('\n')
+	driver = Driver(Insurance_Network)
+	# compute P(q|E) with exact (variable elimination) & approx inference algs
+	query = 'PropCost'
+	evidence = {'Age': 'Adolescent', 'Antilock': 'False', 'Mileage': 'FiftyThou', 'MakeModel': 'SportsCar' }
+	exact, rej, gibbs, lw = driver.run_all_inference_methods(query, evidence)

@@ -13,7 +13,7 @@ net = sbn.BayesNet(
 
 
 # next define conditional probabilities
-net.P['Asia'] = pd.Series({'no': 0.99, 'yes': 0.01})
+net.P['Asia'] = pd.Series({'no': .99, 'yes': 0.01})
 net.P['Smoke'] = pd.Series({'no': 0.5, 'yes': 0.5})
 
 
