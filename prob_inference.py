@@ -1,14 +1,10 @@
-# this is a test script, proving functionality of code
-# I've chosen to use the sorobn library written by Max Halford
-# https://github.com/MaxHalford/sorobn
-# This library is more transparent than high performance BN libraries
-# As the project proceeds, I may revise/tweak the implementation
-
+import os 
 import sorobn as sbn
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 import numpy as np 
 import pandas as pd 
+import matplotlib.pyplot as plt
 import pprint
 import time
 from collections import defaultdict
@@ -39,14 +35,15 @@ def timeit_wrapper(func):
 		for _ in range(niter):
 			results.append(func(*args, **kwargs))
 		end = time.process_time()
-		print(f'Avg CPU time: {(end-start)/niter}')
+		duration = (end-start)/niter
+		print(f'Avg CPU time: {duration}')
 
 		# aggregate probabilities
-		return aggregate(results)
+		return aggregate(results), duration
 	return wrapper 
 
 
-class Driver:
+class BNAnalysis:
 	""" Takes a BN and runs a series of approximate/exact inference methods in 
 	order to compare performance """
 
@@ -56,7 +53,7 @@ class Driver:
 		return
 
 	@timeit_wrapper
-	def infer(self, alg, q, E, N=100):
+	def infer(self, alg, q, E, N=1000):
 		"""
 		Makes an inference
 		Args:
@@ -95,33 +92,100 @@ class Driver:
 					N=N)
 		pprint.pprint(f'Approx Inference (rejection): {rej_dist}'); print('\n')
 
-		gibbs_dist = self.infer(alg='gibbs',
-					q=query,
-					E=evidence,
-					N=N)
-		pprint.pprint(f'Approx Inference (gibbs): {gibbs_dist}'); print('\n')
-
 		lw_dist = self.infer(alg='likelihood',
 					q=query,
 					E=evidence,
 					N=N)
 		pprint.pprint(f'Approx Inference (likelihood): {lw_dist}'); print('\n')
 
+		gibbs_dist = self.infer(alg='gibbs',
+					q=query,
+					E=evidence,
+					N=N)
+		pprint.pprint(f'Approx Inference (gibbs): {gibbs_dist}'); print('\n')
 
 		return exact_dist, rej_dist, gibbs_dist, lw_dist
 
 
+	def KL_iteration_plot(self, alg, query, evidence, max_n=1000):
+		# Plot KL divergence, runtime vs iteration
+		entropies = []
+		times = []
+		N_iter = []
+		percents = []
+
+		# compute exact distribution
+		exact_dist, t = self.infer(alg='exact',
+				 q=query,
+				 E=evidence,
+				 )
+
+		order = sorted(exact_dist.keys())
+		# compute approx distribution as a function of # iterations
+		duration = 0
+		for i in range(0, max_n, 20):
+			approx_dist, t = self.infer(alg,
+					q=query,
+					E=evidence,
+					N=i+1)
+			duration+=t
+
+			try:
+				approx_list = [approx_dist[k] for k in order]
+				entropies.append(
+					sum(KLDiv(list(exact_dist.values()),approx_list))
+				)
+				times.append(duration)
+				N_iter.append(i)
+				percents.append(
+					np.abs(exact_dist[order[0]] - approx_list[0])/exact_dist[order[0]] * 100
+				)
+			except:
+				continue
+
+		# plot runtime
+		plt.plot(N_iter,times)
+		plt.ylabel('Time')
+		plt.xlabel('Iteration')
+		name = os.path.dirname(__file__) + '/plots/' + 'Time' +'.png'
+		plt.savefig(fname=name)
+		plt.clf()
+		# plot kl divergence
+		plt.plot(N_iter, entropies)
+		plt.ylabel('KL Divergence')
+		plt.xlabel('Iteration')
+		name = os.path.dirname(__file__) + '/plots/' + 'KL' +'.png'
+		plt.savefig(fname=name)
+		plt.clf()
+		# plot % error
+		plt.plot(N_iter, percents)
+		plt.ylabel('Percent Error')
+		plt.xlabel('Iteration')
+		name = os.path.dirname(__file__) + '/plots/' + 'Percent_Err' +'.png'
+		plt.savefig(fname=name)
+		
+		return  approx_dist, exact_dist
+
 if __name__ == '__main__':
 	
-	driver = Driver(Asia_Network)
-	# # compute P(q|E) with exact (variable elimination) & approx inference algs
-	query = 'Lung'
-	evidence = {'Asia': 'yes', 'Smoke': 'no'}
-	exact, rej, gibbs, lw = driver.run_all_inference_methods(query, evidence)
+	# BNA = BNAnalysis(Asia_Network)
+	# # # compute P(q|E) with exact (variable elimination) & approx inference algs
+	# query = 'Lung'
+	# evidence = {'Asia': 'yes', 'Smoke': 'no'}
+	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
 	
 
-	driver = Driver(Insurance_Network)
-	# compute P(q|E) with exact (variable elimination) & approx inference algs
-	query = 'PropCost'
-	evidence = {'Age': 'Adolescent', 'Antilock': 'False', 'Mileage': 'FiftyThou', 'MakeModel': 'SportsCar' }
-	exact, rej, gibbs, lw = driver.run_all_inference_methods(query, evidence)
+	# BNA = BNAnalysis(Insurance_Network)
+	# # compute P(q|E) with exact (variable elimination) & approx inference algs
+	# query = 'PropCost'
+	# evidence = {'Age': 'Senior'}
+	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
+
+	# query = 'Age'
+	# evidence = {'MedCost': 'Million', 'RiskAversion': 'Psychopath', 'Theft': 'True'}
+	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
+
+	# BNA = BNAnalysis(Insurance_Network)
+	# query = 'PropCost'
+	# evidence = {'Age': 'Senior'}
+	# aprx, exact = BNA.KL_iteration_plot('likelihood', query, evidence, max_n=6000)
