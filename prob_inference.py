@@ -79,33 +79,43 @@ class BNAnalysis:
 		Returns:
 			P(q|E) as estimated/computed with specified algorithm
 		"""
-		exact_dist = self.infer(alg='exact',
+		exact_dist, t_exact = self.infer(alg='exact',
 				 q=query,
 				 E=evidence,
 				 )
 
 		pprint.pprint(f'Exact Inference {exact_dist}'); print('\n')
 
-		rej_dist = self.infer(alg='rejection',
+		rej_dist, t_rej = self.infer(alg='rejection',
 					q=query,
 					E=evidence,
 					N=N)
 		pprint.pprint(f'Approx Inference (rejection): {rej_dist}'); print('\n')
 
-		lw_dist = self.infer(alg='likelihood',
+		lw_dist, t_lw = self.infer(alg='likelihood',
 					q=query,
 					E=evidence,
 					N=N)
 		pprint.pprint(f'Approx Inference (likelihood): {lw_dist}'); print('\n')
 
-		gibbs_dist = self.infer(alg='gibbs',
+		gibbs_dist, t_gibbs = self.infer(alg='gibbs',
 					q=query,
 					E=evidence,
 					N=N)
 		pprint.pprint(f'Approx Inference (gibbs): {gibbs_dist}'); print('\n')
+		order = sorted(exact_dist.keys())
+		entropies = {}
+		for idx, aprx in enumerate([rej_dist, lw_dist, gibbs_dist]):
+			try:
+				approx_list = [aprx[k] for k in order]
+				entropies[idx]= sum(KLDiv(list(exact_dist.values()),approx_list))
+			except:
+				continue 
+				
+		pprint.pprint(entropies)
 
+		
 		return exact_dist, rej_dist, gibbs_dist, lw_dist
-
 
 	def KL_iteration_plot(self, alg, query, evidence, max_n=1000):
 		# Plot KL divergence, runtime vs iteration
@@ -123,7 +133,7 @@ class BNAnalysis:
 		order = sorted(exact_dist.keys())
 		# compute approx distribution as a function of # iterations
 		duration = 0
-		for i in range(0, max_n, 20):
+		for i in range(0, max_n, 500):
 			approx_dist, t = self.infer(alg,
 					q=query,
 					E=evidence,
@@ -175,7 +185,7 @@ if __name__ == '__main__':
 	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
 	
 
-	# BNA = BNAnalysis(Insurance_Network)
+	BNA = BNAnalysis(Insurance_Network)
 	# # compute P(q|E) with exact (variable elimination) & approx inference algs
 	# query = 'PropCost'
 	# evidence = {'Age': 'Senior'}
@@ -183,9 +193,8 @@ if __name__ == '__main__':
 
 	# query = 'Age'
 	# evidence = {'MedCost': 'Million', 'RiskAversion': 'Psychopath', 'Theft': 'True'}
-	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
+	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=100000)
 
-	# BNA = BNAnalysis(Insurance_Network)
-	# query = 'PropCost'
-	# evidence = {'Age': 'Senior'}
-	# aprx, exact = BNA.KL_iteration_plot('likelihood', query, evidence, max_n=6000)
+	query = 'PropCost'
+	evidence = {'Age': 'Senior'}
+	aprx, exact = BNA.KL_iteration_plot('likelihood', query, evidence, max_n=6000)
