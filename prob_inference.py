@@ -29,7 +29,7 @@ def aggregate(dict_list):
 def timeit_wrapper(func):
 	# computes average CPU execution time over N iterations
 	def wrapper(*args, **kwargs):
-		niter = 1
+		niter = 10
 		results = []
 		start = time.process_time()
 		for _ in range(niter):
@@ -178,23 +178,22 @@ class BNAnalysis:
 
 if __name__ == '__main__':
 	
-	# BNA = BNAnalysis(Asia_Network)
-	# # # compute P(q|E) with exact (variable elimination) & approx inference algs
-	# query = 'Lung'
-	# evidence = {'Asia': 'yes', 'Smoke': 'no'}
-	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
+	BNA = BNAnalysis(Asia_Network)
+	# compute P(q|E) with exact (variable elimination) & approx inference algs
+	query = 'Lung'
+	evidence = {'Asia': 'yes', 'Smoke': 'no'}
+	exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
 	
-
 	BNA = BNAnalysis(Insurance_Network)
-	# # compute P(q|E) with exact (variable elimination) & approx inference algs
-	# query = 'PropCost'
-	# evidence = {'Age': 'Senior'}
-	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
-
-	# query = 'Age'
-	# evidence = {'MedCost': 'Million', 'RiskAversion': 'Psychopath', 'Theft': 'True'}
-	# exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=100000)
-
+	# compute P(q|E) with exact (variable elimination) & approx inference algs
 	query = 'PropCost'
 	evidence = {'Age': 'Senior'}
-	aprx, exact = BNA.KL_iteration_plot('likelihood', query, evidence, max_n=6000)
+	exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=1000)
+
+	query = 'Age'
+	evidence = {'MedCost': 'Million', 'RiskAversion': 'Psychopath', 'Theft': 'True'}
+	exact, rej, gibbs, lw = BNA.run_all_inference_methods(query, evidence, N=100000)
+
+	# query = 'PropCost'
+	# evidence = {'Age': 'Senior'}
+	# aprx, exact = BNA.KL_iteration_plot('likelihood', query, evidence, max_n=6000)

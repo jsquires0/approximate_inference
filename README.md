@@ -8,7 +8,8 @@ make install
 ```
 
 ## Run
-A driver script to verify code functionality on Pearl's Alarm Net can be executed with
+Execute
 ```
 python prob_inference.py
 ```
+to run example inference queries on Asia/Insurance networks.
